@@ -55,7 +55,7 @@ class LoginSerializer(serializers.Serializer):
         username = data.get('username')
         password = data.get('password')
         if not username or not password:
-            raise serializers.ValidationError('Username or password are required.')
+            raise serializers.ValidationError('Username and password are required.')
         user = authenticate(
             username=username,
             password=password
