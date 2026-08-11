@@ -79,3 +79,21 @@ class TaskDetailView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
+    def delete(self, request, task_id):
+        try:
+            task = Task.objects.get(
+                id=task_id,
+                user=request.user
+            )
+        except Task.DoesNotExist:
+            return Response(
+                {"message": "Task not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        task.delete()
+
+        return Response(
+            {"message": "Task deleted successfully."},
+            status=status.HTTP_200_OK
+        )
