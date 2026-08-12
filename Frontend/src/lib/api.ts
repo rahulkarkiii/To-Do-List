@@ -71,8 +71,20 @@ export const tokenStore = {
 /* ---------------- axios instance ---------------- */
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
+  baseURL: "http://127.0.0.1:8000/api/",
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = tokenStore.access();
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
 });
 
 api.interceptors.request.use((config) => {
@@ -152,11 +164,37 @@ function extractTokens(data: Record<string, unknown>) {
   return { access: access ?? null, refresh };
 }
 
-export async function loginUser(payload: { username: string; password: string }) {
-  const { data } = await api.post("auth/login/", payload);
-  const { access, refresh } = extractTokens(data ?? {});
-  const user = (data?.user ?? { username: payload.username }) as AuthUser;
-  return { access, refresh, user, raw: data };
+export async function loginUser(payload: {
+  username: string;
+  password: string;
+}) {
+  try {
+    const response = await api.post("auth/login/", payload);
+
+    console.log("LOGIN STATUS:", response.status);
+    console.log("LOGIN RESPONSE:", response.data);
+
+    const data = response.data;
+
+    const { access, refresh } = extractTokens(data ?? {});
+
+    console.log("ACCESS TOKEN EXISTS:", !!access);
+    console.log("REFRESH TOKEN EXISTS:", !!refresh);
+
+    const user = (data?.user ?? {
+      username: payload.username,
+    }) as AuthUser;
+
+    return {
+      access,
+      refresh,
+      user,
+      raw: data,
+    };
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
+    throw error;
+  }
 }
 
 export async function registerUser(payload: {
